@@ -12,17 +12,17 @@ Discord bot for tracking Smash Bros tournament side bets with your friends.
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `/bet create <description> <amount> <odds>` | Create an open bet |
-| `/bet accept <bet_id>` | Accept an open bet |
-| `/bet cancel <bet_id>` | Cancel your own open bet |
-| `/bet list` | Show all open bets |
-| `/bet active` | Show all active (in-progress) bets |
-| `/bet report <bet_id> <winner>` | Report the result of a bet |
-| `/bet edit <bet_id> <winner>` | Correct a result (Bet Admin only) |
-| `/bet history` | Show recently settled bets |
-| `/bet ledger` | Show who owes whom |
+| Command                                     | Description                        |
+| ------------------------------------------- | ---------------------------------- |
+| `/bet create <description> <amount> <odds>` | Create an open bet                 |
+| `/bet accept <bet_id>`                      | Accept an open bet                 |
+| `/bet cancel <bet_id>`                      | Cancel your own open bet           |
+| `/bet list`                                 | Show all open bets                 |
+| `/bet active`                               | Show all active (in-progress) bets |
+| `/bet report <bet_id> <winner>`             | Report the result of a bet         |
+| `/bet edit <bet_id> <winner>`               | Correct a result (Bet Admin only)  |
+| `/bet history`                              | Show recently settled bets         |
+| `/bet ledger`                               | Show who owes whom                 |
 
 ### Odds
 
@@ -76,16 +76,6 @@ npm run dev
 npm run build
 npm start
 ```
-
-## Deploy to Railway
-
-1. Push this repo to GitHub
-2. Create a new project on [Railway](https://railway.app)
-3. Connect your GitHub repo — Railway will detect the Dockerfile automatically
-4. Add the environment variables above in **Variables**
-5. Deploy
-
-The bot will build and start automatically. Run `npm run deploy-commands` locally once to register the slash commands (this only needs to happen once, not on every deploy).
 
 ## Admin Role
 
