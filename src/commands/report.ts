@@ -84,7 +84,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         : bet.amount;
 
     await interaction.reply({
-      content: `Bet \`${shortId(bet.id)}\` settled! <@${winnerId}> wins **$${payout.toFixed(2)}** from <@${loserId}>.`,
+      content: `Bet \`${shortId(bet.id)}\` settled! <@${winnerId}> wins **$${payout.toFixed(0)}** from <@${loserId}>.`,
       embeds: [embed],
     });
   } catch (err) {

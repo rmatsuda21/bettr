@@ -40,7 +40,7 @@ export function formatBetEmbed(bet: Bet): EmbedBuilder {
       },
       {
         name: "Creator",
-        value: `<@${bet.creator_id}> risks **$${bet.amount}**`,
+        value: `<@${bet.creator_id}> risks **$${Number(bet.amount).toFixed(0)}**`,
         inline: false,
       }
     );
@@ -48,13 +48,13 @@ export function formatBetEmbed(bet: Bet): EmbedBuilder {
   if (bet.acceptor_id) {
     embed.addFields({
       name: "Acceptor",
-      value: `<@${bet.acceptor_id}> risks **$${acceptorRisk.toFixed(2)}**`,
+      value: `<@${bet.acceptor_id}> risks **$${acceptorRisk.toFixed(0)}**`,
       inline: false,
     });
   } else {
     embed.addFields({
       name: "Acceptor",
-      value: `Open — accept to risk **$${acceptorRisk.toFixed(2)}**`,
+      value: `Open — accept to risk **$${acceptorRisk.toFixed(0)}**`,
       inline: false,
     });
   }
@@ -99,7 +99,7 @@ export function formatBetListEmbed(
     const acceptor = bet.acceptor_id ? `<@${bet.acceptor_id}>` : "???";
     return (
       `\`${shortId(bet.id)}\` **${bet.description}**\n` +
-      `${creator} $${bet.amount} vs ${acceptor} $${acceptorRisk.toFixed(2)} @ ${bet.odds_creator}:${bet.odds_acceptor}`
+      `${creator} $${Number(bet.amount).toFixed(0)} vs ${acceptor} $${acceptorRisk.toFixed(0)} @ ${bet.odds_creator}:${bet.odds_acceptor}`
     );
   });
 
@@ -167,7 +167,7 @@ export function formatLedgerEmbed(entries: LedgerEntry[]): EmbedBuilder {
   }
 
   const lines = entries.map(
-    (e) => `<@${e.from}> owes <@${e.to}> **$${e.amount.toFixed(2)}**`
+    (e) => `<@${e.from}> owes <@${e.to}> **$${e.amount.toFixed(0)}**`
   );
 
   embed.setDescription(lines.join("\n"));

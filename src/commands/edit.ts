@@ -81,7 +81,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       winnerId === bet.creator_id ? getAcceptorRisk(bet) : bet.amount;
 
     await interaction.reply({
-      content: `Bet \`${shortId(bet.id)}\` result corrected by <@${interaction.user.id}>. <@${winnerId}> wins **$${payout.toFixed(2)}** from <@${loserId}>.`,
+      content: `Bet \`${shortId(bet.id)}\` result corrected by <@${interaction.user.id}>. <@${winnerId}> wins **$${payout.toFixed(0)}** from <@${loserId}>.`,
       embeds: [embed],
     });
   } catch (err) {

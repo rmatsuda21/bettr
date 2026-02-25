@@ -60,7 +60,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const embed = formatBetEmbed(bet);
     const risk = getAcceptorRisk(bet);
     await interaction.reply({
-      content: `<@${interaction.user.id}> accepted the bet! They risk **$${risk.toFixed(2)}** against <@${bet.creator_id}>'s **$${bet.amount}**.`,
+      content: `<@${interaction.user.id}> accepted the bet! They risk **$${risk.toFixed(0)}** against <@${bet.creator_id}>'s **$${Number(bet.amount).toFixed(0)}**.`,
       embeds: [embed],
     });
   } catch (err) {

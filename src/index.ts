@@ -6,9 +6,10 @@ import {
   ChatInputCommandInteraction,
   MessageFlags,
   ButtonInteraction,
+  ModalSubmitInteraction,
 } from "discord.js";
-import { acceptBet, getBet, getAcceptorRisk } from "./lib/db";
-import { formatBetEmbed } from "./lib/format";
+import { acceptBet, createBet, getBet, getAcceptorRisk } from "./lib/db";
+import { acceptButtonRow, formatBetEmbed } from "./lib/format";
 
 import * as create from "./commands/create";
 import * as accept from "./commands/accept";
@@ -49,6 +50,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 
+  if (interaction.isModalSubmit()) {
+    await handleModal(interaction);
+    return;
+  }
+
   if (!interaction.isChatInputCommand()) return;
   if (interaction.commandName !== "bet") return;
 
@@ -80,6 +86,77 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
   }
 });
+
+async function handleModal(interaction: ModalSubmitInteraction) {
+  if (interaction.customId !== "create_bet_modal") return;
+
+  const guildId = interaction.guildId;
+  if (!guildId) {
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const description = interaction.fields.getTextInputValue("bet_description");
+  const amountStr = interaction.fields.getTextInputValue("bet_amount");
+  const oddsStr = interaction.fields.getTextInputValue("bet_odds");
+
+  const amount = Number(amountStr);
+  if (isNaN(amount) || amount < 1) {
+    await interaction.reply({
+      content: "Invalid amount. Enter a whole dollar number (e.g. `10`).",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const oddsMatch = oddsStr.match(/^(\d+):(\d+)$/);
+  if (!oddsMatch) {
+    await interaction.reply({
+      content: "Invalid odds format. Use `X:Y` (e.g. `1:2`, `3:1`).",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const oddsCreator = parseInt(oddsMatch[1]);
+  const oddsAcceptor = parseInt(oddsMatch[2]);
+
+  if (oddsCreator < 1 || oddsAcceptor < 1) {
+    await interaction.reply({
+      content: "Odds values must be at least 1.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  try {
+    const bet = await createBet(
+      guildId,
+      interaction.user.id,
+      description,
+      amount,
+      oddsCreator,
+      oddsAcceptor
+    );
+
+    const embed = formatBetEmbed(bet);
+    const row = acceptButtonRow(bet.id);
+    await interaction.reply({
+      content: "Bet created! Who wants to take the other side?",
+      embeds: [embed],
+      components: [row],
+    });
+  } catch (err) {
+    console.error("Error creating bet from modal:", err);
+    await interaction.reply({
+      content: "Failed to create bet. Please try again.",
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+}
 
 async function handleButton(interaction: ButtonInteraction) {
   if (!interaction.customId.startsWith("accept_bet:")) return;
@@ -117,7 +194,7 @@ async function handleButton(interaction: ButtonInteraction) {
     const risk = getAcceptorRisk(bet);
 
     await interaction.update({
-      content: `<@${interaction.user.id}> accepted the bet! They risk **$${risk.toFixed(2)}** against <@${bet.creator_id}>'s **$${bet.amount}**.`,
+      content: `<@${interaction.user.id}> accepted the bet! They risk **$${risk.toFixed(0)}** against <@${bet.creator_id}>'s **$${Number(bet.amount).toFixed(0)}**.`,
       embeds: [embed],
       components: [],
     });
