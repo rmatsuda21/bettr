@@ -8,7 +8,13 @@ import {
   ButtonInteraction,
   ModalSubmitInteraction,
 } from "discord.js";
-import { acceptBet, createBet, getBet, getAcceptorRisk } from "./lib/db";
+import {
+  acceptBet,
+  createBet,
+  getBet,
+  getAcceptorRisk,
+  insertSettledBet,
+} from "./lib/db";
 import { acceptButtonRow, formatBetEmbed } from "./lib/format";
 
 import * as create from "./commands/create";
@@ -21,6 +27,7 @@ import * as edit from "./commands/edit";
 import * as history from "./commands/history";
 import * as ledger from "./commands/ledger";
 import * as config from "./commands/config";
+import * as insert from "./commands/insert";
 
 const subcommands: Record<
   string,
@@ -36,6 +43,7 @@ const subcommands: Record<
   history,
   ledger,
   config,
+  insert,
 };
 
 const client = new Client({
@@ -90,8 +98,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 async function handleModal(interaction: ModalSubmitInteraction) {
-  if (interaction.customId !== "create_bet_modal") return;
+  if (interaction.customId === "create_bet_modal") {
+    await handleCreateBetModal(interaction);
+  } else if (interaction.customId.startsWith("insert_bet_modal:")) {
+    await handleInsertBetModal(interaction);
+  }
+}
 
+async function handleCreateBetModal(interaction: ModalSubmitInteraction) {
   const guildId = interaction.guildId;
   if (!guildId) {
     await interaction.reply({
@@ -155,6 +169,83 @@ async function handleModal(interaction: ModalSubmitInteraction) {
     console.error("Error creating bet from modal:", err);
     await interaction.reply({
       content: "Failed to create bet. Please try again.",
+      flags: MessageFlags.Ephemeral,
+    });
+  }
+}
+
+const AMOUNT_ODDS_PATTERN = /^\s*(\d+)\s+at\s+(\d+):(\d+)\s*$/i;
+
+async function handleInsertBetModal(interaction: ModalSubmitInteraction) {
+  const guildId = interaction.guildId;
+  if (!guildId) {
+    await interaction.reply({
+      content: "This command can only be used in a server.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const parts = interaction.customId.split(":");
+  const creatorId = parts[1];
+  const acceptorId = parts[2];
+
+  const description = interaction.fields.getTextInputValue("insert_description");
+  const amountOddsStr = interaction.fields.getTextInputValue("insert_amount_odds");
+  const winnerStr = interaction.fields.getTextInputValue("insert_winner").trim().toLowerCase();
+
+  const amountOddsMatch = amountOddsStr.match(AMOUNT_ODDS_PATTERN);
+  if (!amountOddsMatch) {
+    await interaction.reply({
+      content: "Invalid format. Use `<amount> at <odds>` (e.g. `10 at 1:2`).",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  const amount = parseInt(amountOddsMatch[1]);
+  const oddsCreator = parseInt(amountOddsMatch[2]);
+  const oddsAcceptor = parseInt(amountOddsMatch[3]);
+
+  if (amount < 1 || oddsCreator < 1 || oddsAcceptor < 1) {
+    await interaction.reply({
+      content: "Amount and odds values must be at least 1.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  if (winnerStr !== "creator" && winnerStr !== "acceptor") {
+    await interaction.reply({
+      content: "Winner must be `creator` or `acceptor`.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const winnerId = winnerStr === "creator" ? creatorId : acceptorId;
+
+  try {
+    const bet = await insertSettledBet(
+      guildId,
+      creatorId,
+      acceptorId,
+      description,
+      amount,
+      oddsCreator,
+      oddsAcceptor,
+      winnerId,
+      interaction.user.id
+    );
+
+    const embed = formatBetEmbed(bet);
+    await interaction.reply({
+      content: `Settled bet inserted by <@${interaction.user.id}>.`,
+      embeds: [embed],
+    });
+  } catch (err) {
+    console.error("Error inserting settled bet:", err);
+    await interaction.reply({
+      content: "Failed to insert bet. Please try again.",
       flags: MessageFlags.Ephemeral,
     });
   }

@@ -166,6 +166,39 @@ export async function getSettledBets(
   return (data ?? []) as Bet[];
 }
 
+export async function insertSettledBet(
+  guildId: string,
+  creatorId: string,
+  acceptorId: string,
+  description: string,
+  amount: number,
+  oddsCreator: number,
+  oddsAcceptor: number,
+  winnerId: string,
+  reportedBy: string
+): Promise<Bet> {
+  const { data, error } = await supabase
+    .from("bets")
+    .insert({
+      guild_id: guildId,
+      creator_id: creatorId,
+      acceptor_id: acceptorId,
+      description,
+      amount,
+      odds_creator: oddsCreator,
+      odds_acceptor: oddsAcceptor,
+      status: "settled",
+      winner_id: winnerId,
+      reported_by: reportedBy,
+      settled_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Bet;
+}
+
 export function getAcceptorRisk(bet: Bet): number {
   return (bet.amount * bet.odds_acceptor) / bet.odds_creator;
 }
