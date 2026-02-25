@@ -20,6 +20,7 @@ import * as report from "./commands/report";
 import * as edit from "./commands/edit";
 import * as history from "./commands/history";
 import * as ledger from "./commands/ledger";
+import * as config from "./commands/config";
 
 const subcommands: Record<
   string,
@@ -34,6 +35,7 @@ const subcommands: Record<
   edit,
   history,
   ledger,
+  config,
 };
 
 const client = new Client({

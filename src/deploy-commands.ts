@@ -10,6 +10,7 @@ import * as report from "./commands/report";
 import * as edit from "./commands/edit";
 import * as history from "./commands/history";
 import * as ledger from "./commands/ledger";
+import * as config from "./commands/config";
 
 const command = new SlashCommandBuilder()
   .setName("bet")
@@ -24,6 +25,7 @@ command.addSubcommand(report.data);
 command.addSubcommand(edit.data);
 command.addSubcommand(history.data);
 command.addSubcommand(ledger.data);
+command.addSubcommand(config.data);
 
 const token = process.env.DISCORD_TOKEN;
 const clientId = process.env.DISCORD_CLIENT_ID;

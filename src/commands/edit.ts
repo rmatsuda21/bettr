@@ -31,19 +31,7 @@ export const data = (sub: SlashCommandSubcommandBuilder) =>
     );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const member = interaction.member as GuildMember | null;
-  if (!hasAdminRole(member)) {
-    await interaction.reply({
-      content: `You need the **${process.env.ADMIN_ROLE_NAME ?? "Bet Admin"}** role to edit bet results.`,
-      flags: MessageFlags.Ephemeral,
-    });
-    return;
-  }
-
-  const betIdInput = interaction.options.getString("bet_id", true).trim();
-  const winnerChoice = interaction.options.getString("winner", true);
   const guildId = interaction.guildId;
-
   if (!guildId) {
     await interaction.reply({
       content: "This command can only be used in a server.",
@@ -51,6 +39,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
     return;
   }
+
+  const member = interaction.member as GuildMember | null;
+  if (!(await hasAdminRole(member, guildId))) {
+    await interaction.reply({
+      content:
+        "You need the configured bet admin role to edit results. A server admin can set it with `/bet config`.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const betIdInput = interaction.options.getString("bet_id", true).trim();
+  const winnerChoice = interaction.options.getString("winner", true);
 
   const existing = await findBetByPrefix(betIdInput, guildId);
   if (!existing) {

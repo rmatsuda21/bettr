@@ -1,10 +1,42 @@
-import { GuildMember } from "discord.js";
+import {
+  GuildMember,
+  APIInteractionGuildMember,
+  PermissionsBitField,
+} from "discord.js";
+import { getGuildSettings } from "./db";
 
-const ADMIN_ROLE_NAME = process.env.ADMIN_ROLE_NAME ?? "Bet Admin";
+type MemberLike = GuildMember | APIInteractionGuildMember | null;
 
-export function hasAdminRole(member: GuildMember | null): boolean {
+function getPermissions(member: MemberLike): PermissionsBitField | null {
+  if (!member) return null;
+  if (member.permissions instanceof PermissionsBitField) {
+    return member.permissions;
+  }
+  if (typeof member.permissions === "string") {
+    return new PermissionsBitField(BigInt(member.permissions));
+  }
+  return null;
+}
+
+export async function hasAdminRole(
+  member: MemberLike,
+  guildId: string
+): Promise<boolean> {
   if (!member) return false;
-  return member.roles.cache.some(
-    (role) => role.name.toLowerCase() === ADMIN_ROLE_NAME.toLowerCase()
-  );
+
+  const perms = getPermissions(member);
+  if (perms?.has(PermissionsBitField.Flags.Administrator)) return true;
+
+  const settings = await getGuildSettings(guildId);
+  if (!settings?.admin_role_id) return false;
+
+  if ("roles" in member && Array.isArray(member.roles)) {
+    return member.roles.includes(settings.admin_role_id);
+  }
+
+  if ("roles" in member && member.roles && "cache" in member.roles) {
+    return member.roles.cache.has(settings.admin_role_id);
+  }
+
+  return false;
 }

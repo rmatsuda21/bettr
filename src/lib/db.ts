@@ -169,3 +169,38 @@ export async function getSettledBets(
 export function getAcceptorRisk(bet: Bet): number {
   return (bet.amount * bet.odds_acceptor) / bet.odds_creator;
 }
+
+export interface GuildSettings {
+  guild_id: string;
+  admin_role_id: string | null;
+  updated_at: string;
+}
+
+export async function getGuildSettings(
+  guildId: string
+): Promise<GuildSettings | null> {
+  const { data, error } = await supabase
+    .from("guild_settings")
+    .select()
+    .eq("guild_id", guildId)
+    .single();
+
+  if (error) return null;
+  return data as GuildSettings;
+}
+
+export async function setAdminRole(
+  guildId: string,
+  roleId: string
+): Promise<void> {
+  const { error } = await supabase.from("guild_settings").upsert(
+    {
+      guild_id: guildId,
+      admin_role_id: roleId,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "guild_id" }
+  );
+
+  if (error) throw error;
+}
